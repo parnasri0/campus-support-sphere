@@ -11,6 +11,9 @@ import Profile from "./pages/Profile";
 import Rides from "./pages/Rides";
 import Rent from "./pages/Rent";
 import Errands from "./pages/Errands";
+import Volunteering from "./pages/Volunteering";
+import Collaboration from "./pages/Collaboration";
+import Academic from "./pages/Academic";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,9 +34,9 @@ const App = () => (
           <Route path="/rides" element={<Rides />} />
           <Route path="/rent" element={<Rent />} />
           <Route path="/errands" element={<Errands />} />
-          <Route path="/volunteering" element={<Dashboard />} />
-          <Route path="/collaboration" element={<Dashboard />} />
-          <Route path="/academic" element={<Dashboard />} />
+          <Route path="/volunteering" element={<Volunteering />} />
+          <Route path="/collaboration" element={<Collaboration />} />
+          <Route path="/academic" element={<Academic />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
