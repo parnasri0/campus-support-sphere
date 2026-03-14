@@ -5,27 +5,29 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-export default function Login() {
+export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signUp } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const { error } = await signIn(email, password);
+    const { error } = await signUp(email, password, fullName);
     setLoading(false);
     if (error) {
       toast.error(error.message);
     } else {
-      navigate("/dashboard");
+      toast.success("Account created! Check your email to confirm, or sign in directly.");
+      navigate("/login");
     }
   };
 
@@ -56,11 +58,27 @@ export default function Login() {
 
         <Card variant="elevated" className="backdrop-blur-sm bg-white/95">
           <CardHeader className="text-center pb-4">
-            <CardTitle className="text-2xl">Welcome back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+            <CardTitle className="text-2xl">Create account</CardTitle>
+            <CardDescription>Join CampusConnect today</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleLogin} className="space-y-5">
+            <form onSubmit={handleSignup} className="space-y-5">
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Your full name"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="pl-10 h-12 rounded-xl"
+                    required
+                  />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
@@ -84,11 +102,12 @@ export default function Login() {
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="••••••••"
+                    placeholder="Min 6 characters"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-10 pr-10 h-12 rounded-xl"
                     required
+                    minLength={6}
                   />
                   <button
                     type="button"
@@ -101,14 +120,14 @@ export default function Login() {
               </div>
 
               <Button type="submit" variant="hero" size="lg" className="w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
+                {loading ? "Creating account..." : "Sign Up"}
               </Button>
             </form>
 
             <p className="text-center text-sm text-muted-foreground mt-6">
-              Don't have an account?{" "}
-              <Link to="/signup" className="text-primary font-semibold hover:underline">
-                Sign up
+              Already have an account?{" "}
+              <Link to="/login" className="text-primary font-semibold hover:underline">
+                Sign in
               </Link>
             </p>
           </CardContent>

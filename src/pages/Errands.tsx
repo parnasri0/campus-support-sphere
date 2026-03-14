@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
@@ -9,72 +9,90 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Users, MapPin, Clock, Zap, CheckCircle, AlertCircle, ListTodo } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface Errand {
   id: string;
+  user_id: string;
   title: string;
   description: string;
   pickup: string;
-  drop: string;
-  urgency: "Immediate" | "Today" | "Flexible";
-  createdBy: { name: string };
-  status: "pending" | "accepted" | "completed";
+  drop_off: string;
+  urgency: string;
+  status: string;
+  accepted_by: string | null;
+  created_at: string;
 }
 
-const errands: Errand[] = [
-  {
-    id: "1",
-    title: "Need printouts",
-    description: "10 pages of notes to be printed from the lab",
-    pickup: "CSE Lab",
-    drop: "Hostel Block B",
-    urgency: "Immediate",
-    createdBy: { name: "Priya" },
-    status: "pending",
-  },
-  {
-    id: "2",
-    title: "Submit assignment",
-    description: "Submit my DAA assignment to Prof. Sharma's office",
-    pickup: "Hostel A",
-    drop: "Faculty Block",
-    urgency: "Today",
-    createdBy: { name: "Rahul" },
-    status: "pending",
-  },
-  {
-    id: "3",
-    title: "Buy lab record",
-    description: "Need someone to pick up a lab record from the bookstore",
-    pickup: "Bookstore",
-    drop: "Main Gate",
-    urgency: "Flexible",
-    createdBy: { name: "Sneha" },
-    status: "pending",
-  },
-];
-
-const urgencyStyles = {
+const urgencyStyles: Record<string, { bg: string; icon: any }> = {
   Immediate: { bg: "bg-destructive/10 text-destructive", icon: Zap },
   Today: { bg: "bg-warning/10 text-warning", icon: Clock },
   Flexible: { bg: "bg-success/10 text-success", icon: CheckCircle },
 };
 
 export default function Errands() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("feed");
-  const [acceptedErrands, setAcceptedErrands] = useState<string[]>([]);
+  const [errands, setErrands] = useState<Errand[]>([]);
+  const [myErrands, setMyErrands] = useState<Errand[]>([]);
+  const [acceptedErrands, setAcceptedErrands] = useState<Errand[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleAcceptErrand = (id: string) => {
-    setAcceptedErrands((prev) => [...prev, id]);
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [pickup, setPickup] = useState("");
+  const [dropOff, setDropOff] = useState("");
+  const [urgency, setUrgency] = useState("");
+
+  const fetchAll = async () => {
+    if (!user) return;
+    const [allRes, myRes, acceptedRes] = await Promise.all([
+      supabase.from("errands").select("*").neq("user_id", user.id).eq("status", "pending").order("created_at", { ascending: false }),
+      supabase.from("errands").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
+      supabase.from("errands").select("*").eq("accepted_by", user.id).order("created_at", { ascending: false }),
+    ]);
+    if (allRes.data) setErrands(allRes.data);
+    if (myRes.data) setMyErrands(myRes.data);
+    if (acceptedRes.data) setAcceptedErrands(acceptedRes.data);
+  };
+
+  useEffect(() => { fetchAll(); }, [user]);
+
+  const handleCreate = async () => {
+    if (!title || !description || !pickup || !dropOff || !urgency) {
+      toast.error("Please fill all fields"); return;
+    }
+    setLoading(true);
+    const { error } = await supabase.from("errands").insert({
+      user_id: user?.id, title, description, pickup, drop_off: dropOff, urgency, status: "pending",
+    });
+    setLoading(false);
+    if (error) { toast.error(error.message); } else {
+      toast.success("Errand posted!");
+      setTitle(""); setDescription(""); setPickup(""); setDropOff(""); setUrgency("");
+      fetchAll(); setActiveTab("feed");
+    }
+  };
+
+  const handleAccept = async (id: string) => {
+    const { error } = await supabase.from("errands").update({ status: "accepted", accepted_by: user?.id }).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Errand accepted!"); fetchAll(); }
+  };
+
+  const handleComplete = async (id: string) => {
+    const { error } = await supabase.from("errands").update({ status: "completed" }).eq("id", id);
+    if (error) toast.error(error.message);
+    else { toast.success("Marked completed!"); fetchAll(); }
   };
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6">
       <Header showBack title="Errands" />
-
       <main className="container py-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
           <div className="flex items-center gap-3 mb-6">
@@ -89,165 +107,105 @@ export default function Errands() {
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3 mb-6 h-12 rounded-2xl bg-secondary p-1">
-              <TabsTrigger value="create" className="rounded-xl data-[state=active]:bg-card">
-                <Plus className="h-4 w-4 mr-2" />
-                Create
-              </TabsTrigger>
-              <TabsTrigger value="feed" className="rounded-xl data-[state=active]:bg-card">
-                <ListTodo className="h-4 w-4 mr-2" />
-                Feed
-              </TabsTrigger>
-              <TabsTrigger value="my" className="rounded-xl data-[state=active]:bg-card">
-                <Users className="h-4 w-4 mr-2" />
-                My Tasks
-              </TabsTrigger>
+              <TabsTrigger value="create" className="rounded-xl data-[state=active]:bg-card"><Plus className="h-4 w-4 mr-2" />Create</TabsTrigger>
+              <TabsTrigger value="feed" className="rounded-xl data-[state=active]:bg-card"><ListTodo className="h-4 w-4 mr-2" />Feed</TabsTrigger>
+              <TabsTrigger value="my" className="rounded-xl data-[state=active]:bg-card"><Users className="h-4 w-4 mr-2" />My Tasks</TabsTrigger>
             </TabsList>
 
-            {/* Create Errand Tab */}
             <TabsContent value="create" className="mt-0">
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Create an Errand</CardTitle>
-                </CardHeader>
+                <CardHeader><CardTitle className="text-lg">Create an Errand</CardTitle></CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Task Title</Label>
-                    <Input placeholder="e.g., Need printouts" className="h-12 rounded-xl" />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea placeholder="Describe what you need..." className="rounded-xl resize-none" rows={3} />
-                  </div>
-
+                  <div className="space-y-2"><Label>Task Title</Label><Input placeholder="e.g., Need printouts" value={title} onChange={e => setTitle(e.target.value)} className="h-12 rounded-xl" /></div>
+                  <div className="space-y-2"><Label>Description</Label><Textarea placeholder="Describe what you need..." value={description} onChange={e => setDescription(e.target.value)} className="rounded-xl resize-none" rows={3} /></div>
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Pickup Location</Label>
-                      <Input placeholder="e.g., Library" className="h-12 rounded-xl" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Drop-off Location</Label>
-                      <Input placeholder="e.g., Hostel A" className="h-12 rounded-xl" />
-                    </div>
+                    <div className="space-y-2"><Label>Pickup Location</Label><Input placeholder="e.g., Library" value={pickup} onChange={e => setPickup(e.target.value)} className="h-12 rounded-xl" /></div>
+                    <div className="space-y-2"><Label>Drop-off Location</Label><Input placeholder="e.g., Hostel A" value={dropOff} onChange={e => setDropOff(e.target.value)} className="h-12 rounded-xl" /></div>
                   </div>
-
                   <div className="space-y-2">
                     <Label>Urgency</Label>
-                    <Select>
-                      <SelectTrigger className="h-12 rounded-xl">
-                        <SelectValue placeholder="How urgent is this?" />
-                      </SelectTrigger>
+                    <Select value={urgency} onValueChange={setUrgency}>
+                      <SelectTrigger className="h-12 rounded-xl"><SelectValue placeholder="How urgent?" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="immediate">🔴 Immediate</SelectItem>
-                        <SelectItem value="today">🟡 Today</SelectItem>
-                        <SelectItem value="flexible">🟢 Flexible</SelectItem>
+                        <SelectItem value="Immediate">🔴 Immediate</SelectItem>
+                        <SelectItem value="Today">🟡 Today</SelectItem>
+                        <SelectItem value="Flexible">🟢 Flexible</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <Button variant="hero" size="lg" className="w-full">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Post Errand
+                  <Button variant="hero" size="lg" className="w-full" onClick={handleCreate} disabled={loading}>
+                    <Plus className="h-4 w-4 mr-2" />{loading ? "Posting..." : "Post Errand"}
                   </Button>
                 </CardContent>
               </Card>
             </TabsContent>
 
-            {/* Feed Tab */}
             <TabsContent value="feed" className="mt-0 space-y-4">
-              <AnimatePresence>
-                {errands.map((errand, index) => {
-                  const urgencyStyle = urgencyStyles[errand.urgency];
-                  const UrgencyIcon = urgencyStyle.icon;
-
-                  return (
-                    <motion.div
-                      key={errand.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.1 }}
-                    >
-                      <Card className="hover:shadow-lg transition-shadow">
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-2">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="bg-module-errands/20 text-module-errands text-xs font-semibold">
-                                  {errand.createdBy.name[0]}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm font-medium">{errand.createdBy.name}</span>
+              {errands.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground"><AlertCircle className="h-10 w-10 mx-auto mb-2 opacity-50" /><p>No errands available</p></div>
+              ) : (
+                <AnimatePresence>
+                  {errands.map((errand, index) => {
+                    const style = urgencyStyles[errand.urgency] || urgencyStyles.Flexible;
+                    const UrgencyIcon = style.icon;
+                    return (
+                      <motion.div key={errand.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
+                        <Card className="hover:shadow-lg transition-shadow">
+                          <CardContent className="p-4">
+                            <div className="flex items-start justify-between mb-3">
+                              <h3 className="font-semibold text-foreground">{errand.title}</h3>
+                              <Badge className={`${style.bg} border-0`}><UrgencyIcon className="h-3 w-3 mr-1" />{errand.urgency}</Badge>
                             </div>
-                            <Badge className={`${urgencyStyle.bg} border-0`}>
-                              <UrgencyIcon className="h-3 w-3 mr-1" />
-                              {errand.urgency}
-                            </Badge>
-                          </div>
-
-                          <h3 className="font-semibold text-foreground mb-2">{errand.title}</h3>
-                          <p className="text-sm text-muted-foreground mb-4">{errand.description}</p>
-
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4 text-success" />
-                              {errand.pickup}
-                            </span>
-                            <span>→</span>
-                            <span className="flex items-center gap-1">
-                              <MapPin className="h-4 w-4 text-destructive" />
-                              {errand.drop}
-                            </span>
-                          </div>
-
-                          <Button
-                            className="w-full"
-                            variant={acceptedErrands.includes(errand.id) ? "secondary" : "default"}
-                            disabled={acceptedErrands.includes(errand.id)}
-                            onClick={() => handleAcceptErrand(errand.id)}
-                          >
-                            {acceptedErrands.includes(errand.id) ? "Accepted ✓" : "Accept Errand"}
-                          </Button>
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
+                            <p className="text-sm text-muted-foreground mb-4">{errand.description}</p>
+                            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                              <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-success" />{errand.pickup}</span>
+                              <span>→</span>
+                              <span className="flex items-center gap-1"><MapPin className="h-4 w-4 text-destructive" />{errand.drop_off}</span>
+                            </div>
+                            <Button className="w-full" onClick={() => handleAccept(errand.id)}>Accept Errand</Button>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+              )}
             </TabsContent>
 
-            {/* My Tasks Tab */}
             <TabsContent value="my" className="mt-0">
               <div className="space-y-6">
                 <div>
                   <h3 className="font-semibold text-foreground mb-4">Errands I Created</h3>
-                  <div className="text-center py-8 text-muted-foreground">
-                    <AlertCircle className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-sm">No errands created yet</p>
-                  </div>
+                  {myErrands.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground"><AlertCircle className="h-10 w-10 mx-auto mb-2 opacity-50" /><p className="text-sm">No errands created yet</p></div>
+                  ) : (
+                    <div className="space-y-4">
+                      {myErrands.map(e => (
+                        <Card key={e.id}><CardContent className="p-4">
+                          <h4 className="font-medium">{e.title}</h4>
+                          <p className="text-sm text-muted-foreground">{e.pickup} → {e.drop_off}</p>
+                          <Badge className="mt-2" variant="secondary">{e.status}</Badge>
+                        </CardContent></Card>
+                      ))}
+                    </div>
+                  )}
                 </div>
-
                 <div>
                   <h3 className="font-semibold text-foreground mb-4">Errands I Accepted</h3>
-                  {acceptedErrands.length > 0 ? (
-                    <div className="space-y-4">
-                      {errands
-                        .filter((e) => acceptedErrands.includes(e.id))
-                        .map((errand) => (
-                          <Card key={errand.id}>
-                            <CardContent className="p-4">
-                              <h4 className="font-medium">{errand.title}</h4>
-                              <p className="text-sm text-muted-foreground">{errand.pickup} → {errand.drop}</p>
-                              <Button variant="success" size="sm" className="mt-3">
-                                Mark Completed
-                              </Button>
-                            </CardContent>
-                          </Card>
-                        ))}
-                    </div>
+                  {acceptedErrands.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground"><CheckCircle className="h-10 w-10 mx-auto mb-2 opacity-50" /><p className="text-sm">No accepted errands</p></div>
                   ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <CheckCircle className="h-10 w-10 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No accepted errands</p>
+                    <div className="space-y-4">
+                      {acceptedErrands.map(e => (
+                        <Card key={e.id}><CardContent className="p-4">
+                          <h4 className="font-medium">{e.title}</h4>
+                          <p className="text-sm text-muted-foreground">{e.pickup} → {e.drop_off}</p>
+                          {e.status !== "completed" && (
+                            <Button size="sm" className="mt-3" onClick={() => handleComplete(e.id)}>Mark Completed</Button>
+                          )}
+                          {e.status === "completed" && <Badge className="mt-2 bg-success/10 text-success border-0">Completed</Badge>}
+                        </CardContent></Card>
+                      ))}
                     </div>
                   )}
                 </div>
@@ -256,7 +214,6 @@ export default function Errands() {
           </Tabs>
         </motion.div>
       </main>
-
       <BottomNav />
     </div>
   );
