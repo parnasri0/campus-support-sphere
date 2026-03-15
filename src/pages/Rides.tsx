@@ -3,14 +3,14 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Car, Inbox, Send } from "lucide-react";
+import { Search, Plus, Car, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Ride } from "@/types/rides";
 import { OfferRideForm } from "@/components/rides/OfferRideForm";
 import { BrowseRides } from "@/components/rides/BrowseRides";
 import { DriverRequests } from "@/components/rides/DriverRequests";
-import { MyRequests } from "@/components/rides/MyRequests";
+
 import { MyPostedRides } from "@/components/rides/MyPostedRides";
 
 export default function Rides() {
@@ -63,7 +63,7 @@ export default function Rides() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 mb-6 h-12 rounded-2xl bg-secondary p-1">
+            <TabsList className="grid w-full grid-cols-4 mb-6 h-12 rounded-2xl bg-secondary p-1">
               <TabsTrigger value="browse" className="rounded-xl data-[state=active]:bg-card text-xs px-1">
                 <Search className="h-4 w-4 mr-1" />Browse
               </TabsTrigger>
@@ -75,9 +75,6 @@ export default function Rides() {
               </TabsTrigger>
               <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-card text-xs px-1">
                 <Inbox className="h-4 w-4 mr-1" />Requests
-              </TabsTrigger>
-              <TabsTrigger value="my-requests" className="rounded-xl data-[state=active]:bg-card text-xs px-1">
-                <Send className="h-4 w-4 mr-1" />Sent
               </TabsTrigger>
             </TabsList>
 
@@ -97,9 +94,6 @@ export default function Rides() {
               <DriverRequests />
             </TabsContent>
 
-            <TabsContent value="my-requests" className="mt-0">
-              <MyRequests />
-            </TabsContent>
           </Tabs>
         </motion.div>
       </main>

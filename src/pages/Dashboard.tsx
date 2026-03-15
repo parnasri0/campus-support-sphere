@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
-import { Car, Package, Users, BookOpen, Handshake, Heart, Bell, FileText } from "lucide-react";
+import { Car, Package, Users, BookOpen, Handshake, Heart, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -13,7 +13,7 @@ const modules = [
   { title: "Volunteering", description: "Join campus events.", icon: Heart, path: "/volunteering", color: "volunteer" as const, count: 0 },
   { title: "Collaboration", description: "Find teammates for projects.", icon: Handshake, path: "/collaboration", color: "collab" as const, count: 0 },
   { title: "Academic Support", description: "Post & answer doubts.", icon: BookOpen, path: "/academic", color: "academic" as const, count: 0 },
-  { title: "Resources", description: "Share study materials.", icon: FileText, path: "/resources", color: "academic" as const, count: 0 },
+  
 ];
 
 export default function Dashboard() {
