@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, Car, Inbox, Send } from "lucide-react";
+import { Search, Plus, Car, Inbox } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Ride } from "@/types/rides";
