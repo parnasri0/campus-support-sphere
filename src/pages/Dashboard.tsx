@@ -13,7 +13,7 @@ const modules = [
   { title: "Volunteering", description: "Join campus events.", icon: Heart, path: "/volunteering", color: "volunteer" as const, count: 0 },
   { title: "Collaboration", description: "Find teammates for projects.", icon: Handshake, path: "/collaboration", color: "collab" as const, count: 0 },
   { title: "Academic Support", description: "Post & answer doubts.", icon: BookOpen, path: "/academic", color: "academic" as const, count: 0 },
-  { title: "Resources", description: "Share study materials.", icon: FileText, path: "/resources", color: "academic" as const, count: 0 },
+  
 ];
 
 export default function Dashboard() {
