@@ -94,9 +94,6 @@ export default function Rides() {
               <DriverRequests />
             </TabsContent>
 
-            <TabsContent value="my-requests" className="mt-0">
-              <MyRequests />
-            </TabsContent>
           </Tabs>
         </motion.div>
       </main>
