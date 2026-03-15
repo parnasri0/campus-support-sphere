@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
-import { Car, Package, Users, BookOpen, Handshake, Heart, Bell, FileText } from "lucide-react";
+import { Car, Package, Users, BookOpen, Handshake, Heart, Bell } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 

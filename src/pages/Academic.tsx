@@ -160,7 +160,7 @@ export default function Academic() {
             <div className="space-y-4">
               {doubts.length === 0 ? (
                 <div className="text-center py-12 text-muted-foreground"><HelpCircle className="h-12 w-12 mx-auto mb-4 opacity-50" /><p>No questions posted yet</p></div>
-              ) : doubts.filter(d => d.user_id !== user?.id).map((d, i) => renderDoubtCard(d, i))}
+              ) : doubts.map((d, i) => renderDoubtCard(d, i))}
             </div>
           </TabsContent>
 

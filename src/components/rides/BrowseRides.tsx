@@ -112,7 +112,7 @@ export function BrowseRides({ rides, onRequested }: BrowseRidesProps) {
                 <p className="text-xs text-muted-foreground mb-3">Posted by {ride.user_email || "Student"}</p>
 
                 <Button className="w-full" onClick={() => handleRequest(ride.id)}>
-                  Request Ride
+                  Book Now
                 </Button>
               </CardContent>
             </Card>

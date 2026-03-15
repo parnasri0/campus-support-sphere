@@ -10,7 +10,7 @@ import { Ride } from "@/types/rides";
 import { OfferRideForm } from "@/components/rides/OfferRideForm";
 import { BrowseRides } from "@/components/rides/BrowseRides";
 import { DriverRequests } from "@/components/rides/DriverRequests";
-import { MyRequests } from "@/components/rides/MyRequests";
+
 import { MyPostedRides } from "@/components/rides/MyPostedRides";
 
 export default function Rides() {
