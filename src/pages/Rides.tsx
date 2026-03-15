@@ -63,7 +63,7 @@ export default function Rides() {
           </div>
 
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5 mb-6 h-12 rounded-2xl bg-secondary p-1">
+            <TabsList className="grid w-full grid-cols-4 mb-6 h-12 rounded-2xl bg-secondary p-1">
               <TabsTrigger value="browse" className="rounded-xl data-[state=active]:bg-card text-xs px-1">
                 <Search className="h-4 w-4 mr-1" />Browse
               </TabsTrigger>
@@ -75,9 +75,6 @@ export default function Rides() {
               </TabsTrigger>
               <TabsTrigger value="requests" className="rounded-xl data-[state=active]:bg-card text-xs px-1">
                 <Inbox className="h-4 w-4 mr-1" />Requests
-              </TabsTrigger>
-              <TabsTrigger value="my-requests" className="rounded-xl data-[state=active]:bg-card text-xs px-1">
-                <Send className="h-4 w-4 mr-1" />Sent
               </TabsTrigger>
             </TabsList>
 
