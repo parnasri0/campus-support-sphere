@@ -76,7 +76,7 @@ export default function Landing() {
             transition={{ duration: 0.8, delay: 0.3 }}
             className="flex flex-col sm:flex-row gap-4"
           >
-            <Link to="/login">
+            <Link to="/signup">
               <Button size="xl" className="bg-white text-primary hover:bg-white/90 shadow-xl">
                 Get Started
               </Button>
