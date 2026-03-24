@@ -2,64 +2,36 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Car, Clock, Users, MapPin, DollarSign, UserCheck } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
+import { Car, Clock, Users, DollarSign, UserCheck } from "lucide-react";
 import { toast } from "sonner";
-import { Ride } from "@/types/rides";
+import { Ride, RideRequest } from "@/types/rides";
+import { addItem, getItems, generateId, getCurrentUser } from "@/lib/store";
 
 interface BrowseRidesProps {
   rides: Ride[];
   onRequested: () => void;
 }
 
-const pricingLabels: Record<string, string> = {
-  free: "Free",
-  per_seat: "Per Seat",
-  split: "Split Equally",
-};
-
-const genderLabels: Record<string, string> = {
-  any: "Any Gender",
-  male: "Male Only",
-  female: "Female Only",
-};
+const pricingLabels: Record<string, string> = { free: "Free", per_seat: "Per Seat", split: "Split Equally" };
+const genderLabels: Record<string, string> = { any: "Any Gender", male: "Male Only", female: "Female Only" };
 
 export function BrowseRides({ rides, onRequested }: BrowseRidesProps) {
-  const { user } = useAuth();
+  const user = getCurrentUser();
 
-  const handleRequest = async (rideId: string) => {
-    if (!user) return;
-    
-    // Check if already requested
-    const { data: existing } = await supabase
-      .from("ride_requests")
-      .select("id")
-      .eq("ride_id", rideId)
-      .eq("passenger_id", user.id)
-      .maybeSingle();
-
-    if (existing) {
-      toast.error("You already requested this ride");
-      return;
+  const handleRequest = (rideId: string) => {
+    const requests = getItems<RideRequest>("ride_requests");
+    if (requests.some(r => r.ride_id === rideId && r.passenger_id === user.id)) {
+      toast.error("You already requested this ride"); return;
     }
-
-    const { error } = await supabase.from("ride_requests").insert({
-      ride_id: rideId,
-      passenger_id: user.id,
-      passenger_email: user.email,
-      status: "pending",
+    addItem("ride_requests", {
+      id: generateId(), ride_id: rideId, passenger_id: user.id,
+      passenger_email: user.email, status: "pending", created_at: new Date().toISOString(),
     });
-
-    if (error) {
-      toast.error(error.message);
-    } else {
-      toast.success("Ride requested! The driver will review your request.");
-      onRequested();
-    }
+    toast.success("Ride requested! The driver will review your request.");
+    onRequested();
   };
 
-  const available = rides.filter((r) => r.user_id !== user?.id);
+  const available = rides.filter(r => r.user_id !== user.id);
 
   if (available.length === 0) {
     return (
@@ -77,7 +49,6 @@ export function BrowseRides({ rides, onRequested }: BrowseRidesProps) {
           <motion.div key={ride.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.05 }}>
             <Card className="hover:shadow-lg transition-shadow">
               <CardContent className="p-4">
-                {/* Route */}
                 <div className="flex items-center gap-2 mb-3">
                   <div className="flex flex-col items-center">
                     <div className="w-2.5 h-2.5 rounded-full bg-success" />
@@ -90,30 +61,17 @@ export function BrowseRides({ rides, onRequested }: BrowseRidesProps) {
                     <p className="font-medium text-foreground">{ride.to_location}</p>
                   </div>
                 </div>
-
-                {/* Details */}
                 <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mb-3">
                   <span className="flex items-center gap-1"><Clock className="h-3.5 w-3.5" />{ride.departure_time} → {ride.expected_arrival}</span>
                   <span className="flex items-center gap-1"><Car className="h-3.5 w-3.5" />{ride.vehicle}</span>
                   <span className="flex items-center gap-1"><Users className="h-3.5 w-3.5" />{ride.seats} seats</span>
                 </div>
-
-                {/* Badges */}
                 <div className="flex flex-wrap gap-2 mb-4">
-                  <Badge variant="secondary" className="text-xs">
-                    <DollarSign className="h-3 w-3 mr-1" />{pricingLabels[ride.pricing_method] || ride.pricing_method}
-                  </Badge>
-                  <Badge variant="outline" className="text-xs">
-                    <UserCheck className="h-3 w-3 mr-1" />{genderLabels[ride.gender_preference] || ride.gender_preference}
-                  </Badge>
+                  <Badge variant="secondary" className="text-xs"><DollarSign className="h-3 w-3 mr-1" />{pricingLabels[ride.pricing_method] || ride.pricing_method}</Badge>
+                  <Badge variant="outline" className="text-xs"><UserCheck className="h-3 w-3 mr-1" />{genderLabels[ride.gender_preference] || ride.gender_preference}</Badge>
                 </div>
-
-                {/* Driver info */}
                 <p className="text-xs text-muted-foreground mb-3">Posted by {ride.user_email || "Student"}</p>
-
-                <Button className="w-full" onClick={() => handleRequest(ride.id)}>
-                  Book Now
-                </Button>
+                <Button className="w-full" onClick={() => handleRequest(ride.id)}>Book Now</Button>
               </CardContent>
             </Card>
           </motion.div>
