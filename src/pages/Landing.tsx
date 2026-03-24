@@ -46,9 +46,9 @@ export default function Landing() {
               CampusConnect
             </span>
           </div>
-          <Link to="/login">
+          <Link to="/signup">
             <Button variant="glass" size="sm">
-              Login
+              Sign Up
             </Button>
           </Link>
         </header>
