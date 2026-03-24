@@ -2,9 +2,8 @@ import { motion } from "framer-motion";
 import { Header } from "@/components/layout/Header";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { ModuleCard } from "@/components/dashboard/ModuleCard";
-import { Car, Package, Users, BookOpen, Handshake, Heart, Bell } from "lucide-react";
-import { Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Car, Package, Users, BookOpen, Handshake, Heart } from "lucide-react";
+import { getCurrentUser } from "@/lib/store";
 
 const modules = [
   { title: "Rides", description: "Share rides with fellow students.", icon: Car, path: "/rides", color: "rides" as const, count: 0 },
@@ -13,21 +12,17 @@ const modules = [
   { title: "Volunteering", description: "Join campus events.", icon: Heart, path: "/volunteering", color: "volunteer" as const, count: 0 },
   { title: "Collaboration", description: "Find teammates for projects.", icon: Handshake, path: "/collaboration", color: "collab" as const, count: 0 },
   { title: "Academic Support", description: "Post & answer doubts.", icon: BookOpen, path: "/academic", color: "academic" as const, count: 0 },
-  
 ];
 
 export default function Dashboard() {
-  const { user } = useAuth();
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Student";
+  const user = getCurrentUser();
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-6">
       <Header />
       <main className="container py-6">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-          <h1 className="font-display text-3xl font-bold text-foreground mb-2">
-            Hello, {displayName}! 👋
-          </h1>
+          <h1 className="font-display text-3xl font-bold text-foreground mb-2">Hello, {user.name}! 👋</h1>
           <p className="text-muted-foreground">What would you like to do today?</p>
         </motion.div>
 
